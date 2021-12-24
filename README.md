@@ -1,2 +1,2 @@
 # TuringMachine
-A C++ implementation of Turing Machines
+Rust and C++ implementations of Turing Machines
