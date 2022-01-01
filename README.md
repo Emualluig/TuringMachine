@@ -6,6 +6,9 @@ Both the Rust and C++ implementations are identical in what they do.
 Uses the same notation as https://turingmachine.io/
 
 TODO:
-- [] The Rust version
-- [] Rewrite YAML reader
-- [] Add more comments and small refactoring to C++ version
+- C++:
+  - [ ] Rewrite YAML reader
+  - [ ] More comments
+  - [ ] Read path to the file instead of always using test.yaml
+- Rust:
+  - [ ] The whole thing 
