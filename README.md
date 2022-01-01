@@ -12,3 +12,10 @@ TODO:
   - [ ] Read path to the file instead of always using test.yaml
 - Rust:
   - [ ] The whole thing 
+
+### Performance:
+Performance is defined by the time required to get to 2 million steps on the 6-state busy beaver.
+
+C++:
+
+Rust:
