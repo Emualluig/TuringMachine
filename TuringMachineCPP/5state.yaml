@@ -1,0 +1,20 @@
+# A 5 state busy beaver
+blank: 'B'
+start state: A
+table:
+  A:
+    'B': {write: 1, R: B}
+    1:   {write: 1, L: C}
+  B:
+    'B': {write: 1, R: C}
+    1:   {write: 1, R: B}
+  C:
+    'B': {write: 1, R: D}
+    1:   {write: 'B', L: E}
+  D:
+    'B': {write: 1, L: A}
+    1:   {write: 1, L: D}
+  E:
+    'B': {write: 1, R: h}
+    1:   {write: 'B', L: A}
+  h:
