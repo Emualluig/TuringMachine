@@ -480,6 +480,7 @@ class TuringMachine {
 
 				switch (direction)
 				{
+
 					case MoveDirection::Left:
 						index--;
 						break;
@@ -490,6 +491,7 @@ class TuringMachine {
 				
 				currNode = next;
 				steps++;
+				std::cout << steps << "\n";
 			}
 
 			return steps;
