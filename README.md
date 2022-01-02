@@ -14,7 +14,7 @@ TODO:
   - [ ] The whole thing 
 
 ### Performance:
-Performance is defined by the time required to get to 2 million steps on the 6-state busy beaver.
+Performance is defined by the time required to get to 200 million steps on the 6-state busy beaver.
 
 C++:
 
