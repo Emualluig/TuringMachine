@@ -19,8 +19,7 @@ struct Action {
 }
 
 struct TuringNode {
-    id: u8,
-    cons: [Action; 256],
+    cons: [Option<Action>; 256],
 }
 
 struct Tape {
@@ -29,16 +28,16 @@ struct Tape {
 }
 
 impl Tape {
-    fn getAt(&self, index: i64) -> u8 {
+    fn get_at(&self, index: i64) -> u8 {
         return 0;
     }
-    fn writeAt(&mut self, write: u8, index: i64) {
+    fn write_at(&mut self, write: u8, index: i64) {
 
     }
 }
 
 struct TuringMachine {
-    id_vector: Vec<u8>,
+    id_vector: Vec<TuringNode>,
     id_entry: u8,
     tape: Tape,
 }
@@ -50,34 +49,37 @@ fn main() {
     let mut s: String = String::new();
     let _ = File::open(file_path).unwrap().read_to_string(&mut s);
 
-    
     let yaml: Result<Base, serde_yaml::Error> = serde_yaml::from_str(&s);
 
-    let tn_map: HashMap<String, Option<u8>> = HashMap::new();
+
+    // Store the turing machine struct in this intermediate form
+    let mut id_state: Vec<Vec<(u8, Action)>> = Vec::new();
+    let mut curr_id: u8 = 0;
 
     match yaml {
         Ok(base) => {
             
             // First loop over table and get all state nodes
-            let mut all_state_nodes: Vec<String> = Vec::new();
-            for state in &base.table {
-                println!("{}", state.0);
-                all_state_nodes.push(state.0.clone());
-            }
+            // Create HashMap to link the string name to a numerical id
+            let mut state_ids: HashMap<String, u8> = HashMap::new();
+            base.table.iter().enumerate().for_each(|(id, (name, _))| {
+                state_ids.insert(name.to_string(), id as u8);
+            });
 
             // Check if start_state exist in all state nodes
-            let has_start = all_state_nodes.contains(&base.start_state);
+            let has_start = state_ids.contains_key(&base.start_state);
             if !has_start {
                 println!("[YAML] The state \"{}\" is reference by start state but is not in table.", base.start_state);
                 panic!("Error");
             }
 
-            let mut state_table: HashMap<String, Option<(u8, Action)>> = HashMap::new();
             for (state_name, connections) in base.table {
+
+                // Add new entry to id_state vector
+                id_state.push(Vec::new());
+
                 // The state value must either be a map or a null
                 if connections.is_mapping() {
-
-                    let mut v23: [Option<u8>; 256] = [Option::None; 256];
 
                     for (input, action) in connections.as_mapping().unwrap() {
 
@@ -98,6 +100,8 @@ fn main() {
 
                         } else if input.is_u64() {
                             input_vector.push(input.as_u64().unwrap());
+                        } else if input.is_string() {
+                            input_vector.push(input.as_str().unwrap().as_bytes()[0] as u64);
                         } else {
                             println!("[YAML] Invalid input for state {}. Must be a non-negative integer of a sequence of non-negative integers.", state_name);
                             panic!("Error");
@@ -120,6 +124,8 @@ fn main() {
                             if write_yaml.is_some() {
                                 if write_yaml.unwrap().is_u64() {
                                     write_char = Some(write_yaml.unwrap().as_u64().unwrap() as u8);
+                                } else if write_yaml.unwrap().is_string() {
+                                    write_char = Some(write_yaml.unwrap().as_str().unwrap().as_bytes()[0]);
                                 } else {
                                     println!("[YAML] State transition on {} must be a string.", state_name);
                                 }
@@ -146,6 +152,7 @@ fn main() {
                             panic!("Error");
                         }
 
+                        let mut input_action_vec: Vec<(u8, Action)> = Vec::new();
                         // Read all input and create Action for each of them
                         for action_input_pre in input_vector {
                             let action_input = action_input_pre as u8;
@@ -153,23 +160,84 @@ fn main() {
                             let action_left = move_left;
                             let action_dest = if destination.is_some() { destination.clone().unwrap() } else { state_name.clone() };
 
-                            if !all_state_nodes.contains(&action_dest) {
+                            if !state_ids.contains_key(&action_dest) {
                                 println!("[YAML] The state {} is used in {} but does not exist.", action_dest, state_name);
                                 panic!("Error");
                             }
 
-                            v23[action_input as usize] = Option::None;
+                            let act: Action = Action {write: action_write, move_left: action_left, destination: state_ids[&action_dest] };
+
+                            input_action_vec.push((action_input, act));
                         }
+
+                        // Add current connections to list of all connections for this state
+                        id_state[curr_id as usize].append(&mut input_action_vec);
 
                     }
 
                 } else if connections.is_null() {
-                    state_table.insert(state_name, None);
+                    // do nothing
                 } else {
                     println!("[YAML] The state {} is invalid. Must be either a map or a null.", state_name);
                     panic!("Error");
                 }
+
+                curr_id += 1;
             }
+
+            /*
+            // Print
+            println!("blank: \'{}\'", &base.blank);
+            println!("start start: \'{}\' [{}]", &base.start_state, state_ids.get(&base.start_state).unwrap().clone());
+            if base.input.is_some() {
+                println!("input: {}", &base.input.unwrap());
+            }
+            println!("table:");
+            for (state_string, connections) in &state_table {
+                println!("    {} [{}]:", state_string, state_ids.get(state_string).unwrap());
+                for (input, act) in connections {
+                    println!("        {}:", input);
+                    println!("            write: {}", act.write);
+                    println!("            move_left: {}", act.move_left);
+                    println!("            next: {} [{}]", ids_state.get(&act.destination).unwrap(), act.destination);
+                }
+            }
+            */
+            
+            
+
+            /*
+
+            // Create TuringNodes
+            let mut tn_vec: Vec<TuringNode> = Vec::new();
+            for (state_string, connections) in state_table {
+                // Work-around from: https://github.com/rust-lang/rust/issues/44796
+                const INIT: Option<Action> = Option::None;
+                let mut cons: [Option<Action>; 256] = [INIT; 256];
+                for (input, act) in connections {
+                    cons[input as usize] = Option::Some(act);
+                }
+                let id = state_ids.get(&state_string).unwrap().clone();
+                let tn = TuringNode { id, cons };
+                tn_vec.push(tn);
+            }
+
+            tn_vec.sort_by(|a, b| {
+                a.id.cmp(&b.id)
+            });
+
+            let tm = TuringMachine {
+                id_vector: tn_vec,
+                id_entry: state_ids.get(&base.start_state).unwrap().clone(),
+                tape: Tape { 
+                    front_vector: Vec::new(), 
+                    back_vector: if base.input.is_some() {
+                        Vec::new()
+                    } else { Vec::new() } },
+            };
+
+            */
+
 
         },
         Err(e) => {
@@ -180,7 +248,15 @@ fn main() {
     
 
     {
-        
+        for (id, connections) in id_state.iter().enumerate() {
+            println!("{}:", id);
+            for (input, action) in connections {
+                println!("    {}:", input);
+                println!("        write: {}", action.write);
+                println!("        left:  {}", action.move_left);
+                println!("        desti: {}", action.destination);
+            }
+        }
     }
 }
 
