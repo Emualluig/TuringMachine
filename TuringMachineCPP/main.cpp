@@ -2,7 +2,9 @@
 #include <vector>
 #include <unordered_map>
 
+// vcpkg packages
 #include "yaml-cpp/yaml.h"
+//#include "benchmark/benchmark.h"
 
 const bool DISABLE_ARGS = true;
 
@@ -491,7 +493,9 @@ class TuringMachine {
 				
 				currNode = next;
 				steps++;
-				std::cout << steps << "\n";
+				if (steps == 200000000) {
+					break;
+				}
 			}
 
 			return steps;
@@ -520,7 +524,7 @@ int main(int argc, char *argv[]) {
 
 	TuringMachine tm = TuringMachine("test.yaml");
 	int y = tm.run();
-	std::cout << "Steps: " << y << "\n";
+	//std::cout << "Steps: " << y << "\n";
 	//tm.print();
 
 	return 0;
