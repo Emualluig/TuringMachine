@@ -1,7 +1,7 @@
-use std::{fs::File, io::Read, collections::HashMap, rc::{Rc, Weak}, cell::RefCell};
+use std::{fs::File, io::Read, collections::HashMap};
 
 use serde::Deserialize;
-use serde_yaml::{Value, Sequence};
+use serde_yaml::{Value};
 
 #[derive(Deserialize)]
 struct Base {
@@ -22,17 +22,41 @@ struct TuringNode {
     cons: [Option<Action>; 256],
 }
 
+impl TuringNode {
+    fn read(&self, value: u8) -> Option<&Action> {
+        return self.cons[value as usize].as_ref();
+    }
+}
+
 struct Tape {
+    blank: u8,
     front_vector: Vec<u8>,
     back_vector: Vec<u8>,
 }
 
 impl Tape {
-    fn get_at(&self, index: i64) -> u8 {
-        return 0;
+    fn get_at(&mut self, index: i64) -> u8 {
+        let front_len = self.front_vector.len();
+        let back_len = self.back_vector.len();
+        if index >= 0 {
+            if index as usize >= back_len {
+                self.back_vector.push(self.blank);
+            }
+            return self.back_vector[index as usize];
+        } else {
+            let abs_index = index.abs() as usize - 1;
+            if abs_index >= front_len {
+                self.front_vector.push(self.blank);
+            }
+            return self.front_vector[abs_index];
+        }
     }
     fn write_at(&mut self, write: u8, index: i64) {
-
+        if index >= 0 {
+            self.back_vector[index as usize] = write;
+        } else {
+            self.front_vector[index.abs() as usize - 1] = write;
+        }
     }
 }
 
@@ -42,7 +66,49 @@ struct TuringMachine {
     tape: Tape,
 }
 
+impl TuringMachine {
+    fn run(&mut self) -> i64 {
+
+        let mut steps = 0;
+        let mut current_node = &self.id_vector[self.id_entry as usize];
+        let mut index = 0;
+
+        loop {
+            let cell = self.tape.get_at(index);
+
+            let action_option = current_node.read(cell);
+            if action_option.is_none() {
+                break;
+            }
+            let action = action_option.unwrap();
+            
+            let write = action.write;
+            if write != cell {
+                self.tape.write_at(write, index);
+            }
+
+            let move_direction = action.move_left;
+            if move_direction {
+                index -= 1;
+            } else {
+                index += 1;
+            }
+
+            steps += 1;
+            current_node = &self.id_vector[action.destination as usize];
+        }
+
+        return steps;
+    }
+    fn print(&self) {
+
+    }
+}
+
 fn main() {
+    // Read in yaml file
+    let args: Vec<String> = std::env::args().collect();
+
     // The file must be utf8
     let file_path = "test.yaml";
 
@@ -56,9 +122,24 @@ fn main() {
     let mut id_state: Vec<Vec<(u8, Action)>> = Vec::new();
     let mut curr_id: u8 = 0;
 
+    // These value are going to be initialized before creating the turing machine
+    // The program panics if they are not
+    let tm_entry: u8;
+    let tm_blank: u8;
+    let tm_input: Option<String>;
+
+    {
+        // Read the yaml
+
+
+    }
+
     match yaml {
         Ok(base) => {
             
+            tm_blank = base.blank.to_string().as_bytes()[0];
+            tm_input = base.input;
+
             // First loop over table and get all state nodes
             // Create HashMap to link the string name to a numerical id
             let mut state_ids: HashMap<String, u8> = HashMap::new();
@@ -71,6 +152,8 @@ fn main() {
             if !has_start {
                 println!("[YAML] The state \"{}\" is reference by start state but is not in table.", base.start_state);
                 panic!("Error");
+            } else {
+                tm_entry = state_ids.get(&base.start_state).unwrap().clone();
             }
 
             for (state_name, connections) in base.table {
@@ -184,61 +267,6 @@ fn main() {
 
                 curr_id += 1;
             }
-
-            /*
-            // Print
-            println!("blank: \'{}\'", &base.blank);
-            println!("start start: \'{}\' [{}]", &base.start_state, state_ids.get(&base.start_state).unwrap().clone());
-            if base.input.is_some() {
-                println!("input: {}", &base.input.unwrap());
-            }
-            println!("table:");
-            for (state_string, connections) in &state_table {
-                println!("    {} [{}]:", state_string, state_ids.get(state_string).unwrap());
-                for (input, act) in connections {
-                    println!("        {}:", input);
-                    println!("            write: {}", act.write);
-                    println!("            move_left: {}", act.move_left);
-                    println!("            next: {} [{}]", ids_state.get(&act.destination).unwrap(), act.destination);
-                }
-            }
-            */
-            
-            
-
-            /*
-
-            // Create TuringNodes
-            let mut tn_vec: Vec<TuringNode> = Vec::new();
-            for (state_string, connections) in state_table {
-                // Work-around from: https://github.com/rust-lang/rust/issues/44796
-                const INIT: Option<Action> = Option::None;
-                let mut cons: [Option<Action>; 256] = [INIT; 256];
-                for (input, act) in connections {
-                    cons[input as usize] = Option::Some(act);
-                }
-                let id = state_ids.get(&state_string).unwrap().clone();
-                let tn = TuringNode { id, cons };
-                tn_vec.push(tn);
-            }
-
-            tn_vec.sort_by(|a, b| {
-                a.id.cmp(&b.id)
-            });
-
-            let tm = TuringMachine {
-                id_vector: tn_vec,
-                id_entry: state_ids.get(&base.start_state).unwrap().clone(),
-                tape: Tape { 
-                    front_vector: Vec::new(), 
-                    back_vector: if base.input.is_some() {
-                        Vec::new()
-                    } else { Vec::new() } },
-            };
-
-            */
-
-
         },
         Err(e) => {
             println!("There was an error. {}.\nThe file must be UTF-8.", e);
@@ -248,15 +276,39 @@ fn main() {
     
 
     {
-        for (id, connections) in id_state.iter().enumerate() {
-            println!("{}:", id);
-            for (input, action) in connections {
-                println!("    {}:", input);
-                println!("        write: {}", action.write);
-                println!("        left:  {}", action.move_left);
-                println!("        desti: {}", action.destination);
+        // Create turing nodes
+        let mut tn_vec: Vec<TuringNode> = Vec::new();
+        const INIT: Option<Action> = Option::None;
+        for connection in id_state {
+            let mut cons: [Option<Action>; 256] = [INIT; 256];
+            for (input, action) in connection {
+                cons[input as usize] = Some(action);
             }
+            let tn = TuringNode { cons };
+            tn_vec.push(tn);
         }
+
+        // Create the turing machine
+        let mut tm = TuringMachine {
+            id_vector: tn_vec,
+            id_entry: tm_entry,
+            tape: {
+                Tape {
+                    blank: tm_blank,
+                    front_vector: Vec::new(), 
+                    back_vector: if tm_input.is_some() {
+                        tm_input.unwrap().as_bytes().to_vec()
+                    } else {
+                        Vec::new()
+                    }, 
+                }
+            },
+        };
+
+        // Run the machine
+        let j = tm.run();
+        println!("steps: {}", j);
+
     }
 }
 

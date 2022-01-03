@@ -493,7 +493,7 @@ class TuringMachine {
 				
 				currNode = next;
 				steps++;
-				if (steps == 2000000000) {
+				if (steps == 2'000'000'000) {
 					break;
 				}
 			}
