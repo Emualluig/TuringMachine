@@ -524,7 +524,7 @@ int main(int argc, char *argv[]) {
 
 	TuringMachine tm = TuringMachine("test.yaml");
 	int y = tm.run();
-	//std::cout << "Steps: " << y << "\n";
+	std::cout << "Steps: " << y << "\n";
 	//tm.print();
 
 	return 0;
