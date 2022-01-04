@@ -7,10 +7,8 @@ Uses the same notation as https://turingmachine.io/
 
 ### TODO
 - C++:
-  - [ ] Benchmarking
   - [ ] More comments
 - Rust:
-  - [ ] Benchmarking
   - [ ] More comments
   - [ ] Optimize (its roughly 2x slower than C++) (possibly CPU sampling)
   - [ ] Remove limit of 254 nodes (node id 255 is reserved)
