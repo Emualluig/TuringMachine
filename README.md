@@ -7,13 +7,14 @@ The Rust and C++ implemenations can load in a .yaml file while the C implemenati
 
 Uses the same notation as https://turingmachine.io/
 
+All implemenations have a max of 255 nodes.
+
 ### TODO
 - C++
   - [ ] More comments
 - Rust
   - [ ] More comments
   - [ ] Optimize (its roughly 2x slower than C++) (possibly CPU sampling)
-  - [ ] Remove limit of 254 nodes (node id 255 is reserved)
 - C
   - [ ] The whole thing
 
