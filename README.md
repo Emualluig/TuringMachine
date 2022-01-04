@@ -1,19 +1,22 @@
 # TuringMachine
-Rust and C++ implementations of Turing Machines
+Rust, C++, C implementations of Turing Machines
 
-Both the Rust and C++ implementations are identical in what they do.
+Each of the Rust, C++, C implementations are identical in what they do.
+
+The Rust and C++ implemenations can load in a .yaml file while the C implemenation can't.
 
 Uses the same notation as https://turingmachine.io/
 
-TODO:
-- C++:
-  - [ ] Benchmarking
+All implemenations have a max of 255 nodes.
+
+### TODO
+- C++
   - [ ] More comments
-- Rust:
-  - [ ] Benchmarking
+- Rust
   - [ ] More comments
-  - [ ] Optimize (its roughly 2x slower than C++)
-  - [ ] Remove limit of 254 nodes (node id 255 is reserved)
+  - [ ] Optimize (its roughly 2x slower than C++) (possibly CPU sampling)
+- C
+  - [ ] The whole thing
 
 ### Performance:
 Performance is defined by the average time required to get to 2 billion steps on the 6-state busy beaver then resetting the machine on a sample size of 100.
