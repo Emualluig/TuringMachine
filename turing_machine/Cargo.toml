@@ -18,7 +18,7 @@ panic = "abort"
 codegen-units = 1
 debug-assertions = false
 overflow-checks = false
-
+lto = true
 
 [[bench]]
 name = "my_benchmark"

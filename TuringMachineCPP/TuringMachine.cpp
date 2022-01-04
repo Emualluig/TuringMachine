@@ -67,6 +67,8 @@ char TuringMachine::getAt(int index) {
 
 void TuringMachine::loadTape(std::string tapeInput) {
 	tpInput = tapeInput;
+	frontVector.clear();
+	backVector.clear();
 	for (auto& c : tapeInput) {
 		backVector.push_back(c);
 	}

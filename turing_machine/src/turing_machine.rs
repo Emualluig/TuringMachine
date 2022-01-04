@@ -15,26 +15,82 @@ struct Base {
 struct Action {
     write: u8,
     move_left: bool,
-    destination: u8
+    destination: usize
 }
 
 struct TuringNode {
-    cons: [Option<Action>; 256],
+    cons: [Action; 256],
+    //cons2: [(u8, bool, usize); 256],
 }
 
 impl TuringNode {
-    fn read(&self, value: u8) -> Option<&Action> {
-        return self.cons[value as usize].as_ref();
+    fn read(&self, value: u8) -> &Action {
+        return &self.cons[value as usize];
     }
 }
 
 struct Tape {
+    index: i64,
+    internal_index: usize,
     blank: u8,
     front_vector: Vec<u8>,
     back_vector: Vec<u8>,
 }
 
 impl Tape {
+    fn new(input: String, blank: u8) -> Tape {
+        Tape { 
+            index: 0 as i64, 
+            internal_index: 0 as usize, 
+            blank: blank, 
+            front_vector: Vec::new(), 
+            back_vector: input.as_bytes().to_vec(),
+        }
+    }
+    fn write(&mut self, action: &Action) -> usize {
+        // write then move
+
+        if self.index >= 0 { 
+            self.back_vector[self.internal_index] = action.write;
+        } else { 
+            self.front_vector[self.internal_index] = action.write;
+        };
+
+        match action.move_left {
+            true => {
+                self.index -= 1;
+            },
+            false => {
+                self.index += 1;
+
+            },
+        }
+
+        if self.index >= 0 {
+            self.internal_index = self.index as usize;
+        } else {
+            self.internal_index = (self.index.abs() - 1) as usize;
+        }        
+
+        return action.destination;
+    }
+    fn get (&mut self) -> u8 {
+        match self.index >= 0 {
+            true => {
+                if self.internal_index >= self.back_vector.len() {
+                    self.back_vector.push(self.blank);
+                }
+                return self.back_vector[self.internal_index];
+            },
+            false => {
+                if self.internal_index >= self.front_vector.len() {
+                    self.front_vector.push(self.blank);
+                }
+                return self.front_vector[self.internal_index];
+            },
+        }
+    }
+    
     fn get_at(&mut self, index: i64) -> u8 {
         let front_len = self.front_vector.len();
         let back_len = self.back_vector.len();
@@ -62,9 +118,9 @@ impl Tape {
 
 pub struct TuringMachine {
     id_vector: Vec<TuringNode>,
-    id_entry: u8,
+    id_entry: usize,
     tape: Tape,
-    input: Option<Vec<u8>>,
+    input: String,
 }
 
 impl TuringMachine {
@@ -202,7 +258,7 @@ impl TuringMachine {
                                         panic!("Error");
                                     }
         
-                                    let act: Action = Action {write: action_write, move_left: action_left, destination: state_ids[&action_dest] };
+                                    let act: Action = Action {write: action_write, move_left: action_left, destination: state_ids[&action_dest] as usize };
         
                                     input_action_vec.push((action_input, act));
                                 }
@@ -233,11 +289,15 @@ impl TuringMachine {
 
         // Create turing nodes
         let mut tn_vec: Vec<TuringNode> = Vec::new();
-        const INIT: Option<Action> = Option::None;
+        const INIT: Action = Action {
+            write: 0 as u8,
+            move_left: true,
+            destination: 255 as usize,
+        };
         for connection in id_state {
-            let mut cons: [Option<Action>; 256] = [INIT; 256];
+            let mut cons: [Action; 256] = [INIT; 256];
             for (input, action) in connection {
-                cons[input as usize] = Some(action);
+                cons[input as usize] = action;
             }
             let tn = TuringNode { cons };
             tn_vec.push(tn);
@@ -246,22 +306,18 @@ impl TuringMachine {
         // Create the turing machine
         let tm = TuringMachine {
             id_vector: tn_vec,
-            id_entry: tm_entry,
-            tape: {
-                Tape {
-                    blank: tm_blank,
-                    front_vector: Vec::new(), 
-                    back_vector: if tm_input.is_some() {
-                        tm_input.clone().unwrap().as_bytes().to_vec()
-                    } else {
-                        Vec::new()
-                    }, 
+            id_entry: tm_entry as usize,
+            tape: Tape::new({
+                if tm_input.is_some() {
+                    tm_input.clone().unwrap()
+                } else {
+                    "".to_string()
                 }
-            },
+            }, tm_blank),
             input: if tm_input.is_some() {
-                Some(tm_input.unwrap().as_bytes().to_vec())
+                tm_input.unwrap()
             } else {
-                None
+                "".to_string()
             },
         };
 
@@ -270,56 +326,52 @@ impl TuringMachine {
     pub fn run(&mut self) -> i64 {
 
         let mut steps = 0;
-        let mut current_node = &self.id_vector[self.id_entry as usize];
+        let mut current_node = &self.id_vector[self.id_entry];
         let mut index = 0;
 
         loop {
+            // This is the faster code
             let cell = self.tape.get_at(index);
-
-            let action_option = current_node.read(cell);
-            if action_option.is_none() {
+            let action = current_node.read(cell);
+            let destination = action.destination;
+            if destination == 255 {
                 break;
             }
-            let action = action_option.unwrap();
-            
             let write = action.write;
-            if write != cell {
-                self.tape.write_at(write, index);
+            self.tape.write_at(write, index);
+            match action.move_left {
+                true => index -= 1,
+                false => index += 1,
             }
-
-            let move_direction = action.move_left;
-            if move_direction {
-                index -= 1;
-            } else {
-                index += 1;
-            }
-
             steps += 1;
-
             // Exit on 2_000_000_000
             if steps == 2_000_000_000 {
                 return steps;
             }
-
-            current_node = &self.id_vector[action.destination as usize];
+            current_node = &self.id_vector[action.destination];
+            
+            // This is the slower code (10% slower) which uses an index inside of Tape instead.
+            /*
+            let cell = self.tape.get();
+            let next = self.tape.write(current_node.read(cell));
+            if next == 255 {
+                break;
+            }
+            steps += 1;
+            // Exit on 2_000_000_000
+            if steps == 2_000_000_000 {
+                return steps;
+            }
+            current_node = &self.id_vector[next];
+            */
         }
 
         return steps;
     }
     pub fn print(&self) {
-
+        // TODO
     }
     pub fn reset(&mut self) {
-        let tm_blank = self.tape.blank;
-        let tp = Tape {
-            blank: tm_blank,
-            front_vector: Vec::new(), 
-            back_vector: if self.input.is_some() {
-                self.input.clone().unwrap()
-            } else {
-                Vec::new()
-            }, 
-        };
-        self.tape = tp;
+        self.tape = Tape::new(self.input.clone(), self.tape.blank);
     }
 }
