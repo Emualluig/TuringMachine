@@ -16,7 +16,8 @@ All implemenations have a max of 255 nodes.
   - [ ] More comments
   - [ ] Optimize (its roughly 2x slower than C++) (possibly CPU sampling)
 - C
-  - [ ] The whole thing
+  - [ ] More comments
+  - [ ] Benchmark
 
 ### Performance:
 Performance is defined by the average time required to get to 2 billion steps on the 6-state busy beaver then resetting the machine on a sample size of 100.
