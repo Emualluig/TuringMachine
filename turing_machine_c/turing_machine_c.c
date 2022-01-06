@@ -67,10 +67,11 @@ unsigned char tape_get(struct Tape* tape, int index) {
 	assert(-1 * (tape->front_length) - 1 <= index);
 	assert(index <= (tape->back_length));
 
-	unsigned char** use_vector = (index >= 0) ? &tape->back_vector : &tape->front_vector;
-	int* use_size = (index >= 0) ? &tape->back_size : &tape->front_size;
-	int* use_length = (index >= 0) ? &tape->back_length : &tape->front_length;
-	int    use_index = (index >= 0) ? index : abs(index) - 1;
+	bool positive_index = index >= 0;
+	unsigned char** use_vector = positive_index ? &tape->back_vector : &tape->front_vector;
+	int* use_size   = positive_index ? &tape->back_size : &tape->front_size;
+	int* use_length = positive_index ? &tape->back_length : &tape->front_length;
+	int  use_index  = positive_index ? index : abs(index) - 1;
 	if (use_index >= *use_size) {
 		*use_size *= 2;
 		*use_vector = realloc(*use_vector, *use_size * sizeof(unsigned char));
@@ -154,7 +155,9 @@ int turingnode_run(struct TuringNode* entry_node, struct Tape* tape) {
 			break;
 		}
 		unsigned char write = act->write;
-		tape_write(tape, index, write);
+		if (cell != write) {
+			tape_write(tape, index, write);
+		}
 		current_node = act->destination;
 		switch (act->left) {
 		case true:

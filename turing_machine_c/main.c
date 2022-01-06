@@ -1,6 +1,11 @@
 #include "turing_machine_c.h"
 
-//#include "benchmark/benchmark.h"
+#define is_benchmarking true
+#if is_benchmarking
+
+#include <time.h>
+
+#endif
 
 int main() {
 
@@ -28,19 +33,26 @@ int main() {
 	turingnode_add_connection(&tn_f, 'B', 'B', true, &tn_a);
 	turingnode_add_connection(&tn_f, '1', 'B', true, &tn_c);
 
-	int steps = turingnode_run(&tn_a, &tape);
-	printf("Steps: %d\n", steps);
-
 #if is_benchmarking
 	// Here is the benchmark
 	{
-#include <time.h>
+		const int cycles = 100;
 		float accumulated_time = 0.0f;
-		for (int i = 0; i < 10; i++) {
-			
+		for (int i = 0; i < cycles; i++) {
+			// This method of benchmarking comes from: https://stackoverflow.com/questions/2349776/how-can-i-benchmark-c-code-easily
+			float start_time = (float)clock() / CLOCKS_PER_SEC;
+
+
+			{
+				int steps = turingnode_run(&tn_a, &tape);
+				tape_reset(&tape);
+			}
+
+			float end_time = (float)clock() / CLOCKS_PER_SEC;
+			accumulated_time += end_time - start_time;
 		}
-		float time_per_loop = accumulated_time / 10.0f;
-		printf("Over 10 iteration this took %f seconds.\n", time_per_loop);
+		float time_per_loop = accumulated_time / (float)cycles;
+		printf("Each iteration took on average %f seconds.\n", time_per_loop);
 	}
 #endif
 
