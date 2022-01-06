@@ -1,7 +1,7 @@
 # TuringMachine
 Rust, C++, C implementations of Turing Machines
 
-Each of the Rust, C++, C implementations are identical in what they do.
+Each of the Rust, C++, C implementations are identical in what they do. The code is somewhat identical.
 
 The Rust and C++ implemenations can load in a .yaml file while the C implemenation can't.
 
