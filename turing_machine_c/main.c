@@ -42,7 +42,6 @@ int main() {
 			// This method of benchmarking comes from: https://stackoverflow.com/questions/2349776/how-can-i-benchmark-c-code-easily
 			float start_time = (float)clock() / CLOCKS_PER_SEC;
 
-
 			{
 				int steps = turingnode_run(&tn_a, &tape);
 				tape_reset(&tape);

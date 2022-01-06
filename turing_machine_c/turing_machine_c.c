@@ -71,7 +71,7 @@ unsigned char tape_get(struct Tape* tape, int index) {
 	unsigned char** use_vector = positive_index ? &tape->back_vector : &tape->front_vector;
 	int* use_size   = positive_index ? &tape->back_size : &tape->front_size;
 	int* use_length = positive_index ? &tape->back_length : &tape->front_length;
-	int  use_index  = positive_index ? index : abs(index) - 1;
+	int  use_index = positive_index ? index : abs(index) - 1;
 	if (use_index >= *use_size) {
 		*use_size *= 2;
 		*use_vector = realloc(*use_vector, *use_size * sizeof(unsigned char));
