@@ -18,7 +18,7 @@ Each of the Rust, C++, C implementations are identical in what they do. The code
   - [ ] More optimize (its roughly 2x slower than C++) (CPU sampling)
 - C
   - [X] turing_node struct
-  - [X] YAML parser
+  - [ ] YAML parser
   - [X] Small optimizations
 
 ## Performance:
