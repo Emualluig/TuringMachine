@@ -4,7 +4,7 @@ Rust, C++, C implementations of Turing Machines
 ## About
 A fast and easy to use Turing Machine. It can load in and run a YAML file that defines a Turing Machine. 
 
-Each of the Rust, C++, C implementations are identical in what they do. The code is somewhat identical. The Rust and C++ implemenations can load in a .yaml file while the C implemenation can't. Uses the same notation as https://turingmachine.io/. All implemenations have a max of 255 or 256 nodes.
+Each of the Rust, C++, C implementations are identical in what they do. The code is somewhat identical. The Rust and C++ implemenations can load in a .yaml file while the C implemenation can't. Uses the same notation as https://turingmachine.io/ for the YAML. All implemenations have a max of 255 or 256 nodes.
 
 ## Completeness
 - C++
