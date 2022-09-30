@@ -67,17 +67,31 @@ unsigned char tape_get(struct Tape* tape, int index) {
 	assert(-1 * (tape->front_length) - 1 <= index);
 	assert(index <= (tape->back_length));
 
-	bool positive_index = index >= 0;
-	unsigned char** use_vector = positive_index ? &tape->back_vector : &tape->front_vector;
-	int* use_size   = positive_index ? &tape->back_size : &tape->front_size;
-	int* use_length = positive_index ? &tape->back_length : &tape->front_length;
-	int  use_index = positive_index ? index : abs(index) - 1;
-	if (use_index >= *use_size) {
-		*use_size *= 2;
-		*use_vector = realloc(*use_vector, *use_size * sizeof(unsigned char));
+	const bool positive_index = index >= 0;
+	unsigned char** use_vector;
+	int use_size_direct;
+	int use_length_direct;
+	int use_index;
+	if (positive_index) {
+		use_vector = &tape->back_vector;
+		use_size_direct = tape->back_size;
+		use_length_direct = tape->back_length;
+		use_index = index;
+	} else {
+		use_vector = &tape->front_vector;
+		use_size_direct = tape->front_size;
+		use_length_direct = tape->front_length;
+		use_index = abs(index) - 1;
 	}
-	if (use_index >= *use_length) {
+
+	if (use_index >= use_size_direct) {
+		*use_vector = realloc(*use_vector, 2 * use_size_direct * sizeof(unsigned char));
+		int* use_size = positive_index ? &tape->back_size : &tape->front_size;
+		*use_size *= 2;
+	}
+	if (use_index >= use_length_direct) {
 		(*use_vector)[use_index] = tape->blank;
+		int* use_length = positive_index ? &tape->back_length : &tape->front_length;
 		*use_length += 1;
 	}
 
